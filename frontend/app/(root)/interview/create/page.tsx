@@ -96,9 +96,9 @@ export default function CreateInterviewPage() {
         <Button 
           type="submit" 
           disabled={loading}
-          className="w-full btn-primary"
+          className="w-full btn-primary cursor-pointer"
         >
-          {loading ? 'Generating Interview...' : 'Start Interview'}
+          {loading ? '⏳ Generating Interview...' : '🚀 Start Interview'}
         </Button>
       </form>
     </div>

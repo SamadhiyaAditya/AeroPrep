@@ -24,6 +24,7 @@ export default function CodingRoundPage() {
   const [loading, setLoading] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('javascript');
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     const fetchChallenge = async () => {
@@ -51,7 +52,7 @@ export default function CodingRoundPage() {
   }, []);
 
   const handleRun = async () => {
-      if (!challenge) return;
+      if (!challenge || evaluating) return;
       setEvaluating(true);
       setOutput(null);
       try {
@@ -65,7 +66,8 @@ export default function CodingRoundPage() {
   };
 
   const handleFinish = () => {
-     // Save results and go to feedback
+     if (isNavigating) return;
+     setIsNavigating(true);
      localStorage.setItem('codingResult', JSON.stringify(output));
      localStorage.setItem('codingChallenge', JSON.stringify(challenge));
      localStorage.setItem('codingCode', code);
@@ -73,7 +75,8 @@ export default function CodingRoundPage() {
   };
 
   const handleSkip = () => {
-     // Skip coding round - save empty results
+     if (isNavigating) return;
+     setIsNavigating(true);
      localStorage.setItem('codingResult', JSON.stringify({ passed: false, feedback: 'Skipped coding round', skipped: true }));
      localStorage.setItem('codingChallenge', JSON.stringify(challenge || { title: 'Skipped' }));
      localStorage.setItem('codingCode', '// Coding round was skipped');
@@ -86,8 +89,13 @@ export default function CodingRoundPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
           <p className="text-lg">Generating Coding Challenge...</p>
           <p className="text-sm text-muted-foreground mt-2">(AI is creating a personalized problem based on your resume)</p>
-          <Button variant="outline" className="mt-6" onClick={handleSkip}>
-            Skip Coding Round
+          <Button 
+            variant="outline" 
+            className="mt-6 cursor-pointer" 
+            onClick={handleSkip}
+            disabled={isNavigating}
+          >
+            {isNavigating ? 'Skipping...' : 'Skip Coding Round'}
           </Button>
         </div>
       );
@@ -99,7 +107,15 @@ export default function CodingRoundPage() {
       <div className="w-full md:w-1/3 p-6 border-r overflow-y-auto h-screen">
           <div className="flex justify-between items-start mb-4">
             <h1 className="text-2xl font-bold">{challenge.title}</h1>
-            <Button variant="ghost" size="sm" onClick={handleSkip}>Skip Round</Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleSkip}
+              disabled={isNavigating}
+              className="cursor-pointer"
+            >
+              {isNavigating ? 'Skipping...' : 'Skip Round'}
+            </Button>
           </div>
           
           {/* AI Evaluation Info Banner */}
@@ -141,7 +157,7 @@ export default function CodingRoundPage() {
             <select 
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="bg-slate-700 text-white px-3 py-1.5 rounded-md text-sm border border-slate-600 focus:outline-none focus:ring-2 focus:ring-primary"
+              className="bg-slate-700 text-white px-3 py-1.5 rounded-md text-sm border border-slate-600 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
             >
               {SUPPORTED_LANGUAGES.map((lang) => (
                 <option key={lang.value} value={lang.value}>{lang.label}</option>
@@ -168,12 +184,23 @@ export default function CodingRoundPage() {
               <div className="flex justify-between items-center mb-2">
                   <h3 className="text-white font-semibold">Output / Console</h3>
                   <div className="flex gap-2">
-                      <Button onClick={handleRun} disabled={evaluating} size="sm">
+                      <Button 
+                        onClick={handleRun} 
+                        disabled={evaluating || isNavigating} 
+                        size="sm"
+                        className="cursor-pointer"
+                      >
                           {evaluating ? 'Evaluating...' : 'Run & Submit'}
                       </Button>
                       
-                      <Button onClick={handleFinish} variant="secondary" size="sm">
-                          Finish & View Feedback
+                      <Button 
+                        onClick={handleFinish} 
+                        variant="secondary" 
+                        size="sm"
+                        disabled={isNavigating}
+                        className="cursor-pointer"
+                      >
+                          {isNavigating ? 'Loading...' : 'Finish & View Feedback'}
                       </Button>
                   </div>
               </div>

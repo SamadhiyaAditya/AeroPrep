@@ -19,6 +19,8 @@ export default function InterviewSessionPage() {
   const [userAnswer, setUserAnswer] = useState("");
   const [answers, setAnswers] = useState<{questionIndex: number, answer: string}[]>([]);
   const [showCodingChoice, setShowCodingChoice] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('interviewQuestions');
@@ -35,12 +37,12 @@ export default function InterviewSessionPage() {
   };
 
   const submitAnswer = () => {
-    // Save answer to local state
+    if (isSaving) return;
+    
     const newAnswers = [...answers, { questionIndex: currentIndex, answer: userAnswer }];
     setAnswers(newAnswers);
     localStorage.setItem('interviewAnswers', JSON.stringify(newAnswers));
     
-    // Move to next question or finish
     if (currentIndex >= questions.length - 1) {
       finishQA(newAnswers);
     } else {
@@ -50,7 +52,8 @@ export default function InterviewSessionPage() {
   };
 
   const finishQA = async (finalAnswers: {questionIndex: number, answer: string}[]) => {
-    // Save answers to database if authenticated
+    setIsSaving(true);
+    
     const interviewId = localStorage.getItem('interviewId');
     if (isAuthenticated() && interviewId) {
       try {
@@ -60,15 +63,19 @@ export default function InterviewSessionPage() {
       }
     }
     
-    // Show coding round choice
+    setIsSaving(false);
     setShowCodingChoice(true);
   };
 
   const goToCoding = () => {
+    if (isNavigating) return;
+    setIsNavigating(true);
     router.push('/interview/coding');
   };
 
   const skipCoding = () => {
+    if (isNavigating) return;
+    setIsNavigating(true);
     localStorage.setItem('codingResult', JSON.stringify({ passed: false, feedback: 'Skipped coding round', skipped: true }));
     localStorage.setItem('codingChallenge', JSON.stringify({ title: 'Skipped' }));
     localStorage.setItem('codingCode', '// Coding round was skipped');
@@ -92,18 +99,20 @@ export default function InterviewSessionPage() {
             <Button 
               onClick={goToCoding} 
               size="lg" 
-              className="w-full py-6 text-lg bg-green-600 hover:bg-green-700"
+              className="w-full py-6 text-lg bg-green-600 hover:bg-green-700 cursor-pointer"
+              disabled={isNavigating}
             >
-              ✅ Yes, Take Coding Round
+              {isNavigating ? '⏳ Loading...' : '✅ Yes, Take Coding Round'}
             </Button>
             
             <Button 
               onClick={skipCoding} 
               variant="outline" 
               size="lg"
-              className="w-full py-6 text-lg"
+              className="w-full py-6 text-lg cursor-pointer"
+              disabled={isNavigating}
             >
-              ⏭️ Skip & View Feedback
+              {isNavigating ? '⏳ Loading...' : '⏭️ Skip & View Feedback'}
             </Button>
           </div>
           
@@ -125,7 +134,7 @@ export default function InterviewSessionPage() {
              Question {currentIndex + 1} / {questions.length}
            </h2>
            {!isStarted && (
-             <Button onClick={startInterview} size="lg" className="animate-pulse">
+             <Button onClick={startInterview} size="lg" className="animate-pulse cursor-pointer">
                Start Interview
              </Button>
            )}
@@ -156,7 +165,7 @@ export default function InterviewSessionPage() {
           <div className="bg-muted/30 border rounded-lg p-6">
              <label className="block text-sm font-medium mb-2">Your Answer</label>
              <textarea 
-               className="w-full min-h-[120px] p-3 rounded-md border bg-background"
+               className="w-full min-h-[120px] p-3 rounded-md border bg-background cursor-text"
                placeholder="Type your answer here..."
                value={userAnswer}
                onChange={(e) => setUserAnswer(e.target.value)}
@@ -170,10 +179,10 @@ export default function InterviewSessionPage() {
              <div className="flex gap-4">
                <Button 
                  onClick={submitAnswer} 
-                 className="btn-primary min-w-[200px] py-6 text-lg"
-                 disabled={!userAnswer.trim()} 
+                 className="btn-primary min-w-[200px] py-6 text-lg cursor-pointer"
+                 disabled={!userAnswer.trim() || isSaving} 
                >
-                 {currentIndex === questions.length - 1 ? "🏁 Finish Q&A" : "Next Question →"}
+                 {isSaving ? '⏳ Saving...' : (currentIndex === questions.length - 1 ? "🏁 Finish Q&A" : "Next Question →")}
                </Button>
              </div>
            )}
