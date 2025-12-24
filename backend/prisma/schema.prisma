@@ -1,21 +1,78 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  // output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-model User{
-  id Int  @id @default(autoincrement())
-  name String
-  email String
-  password String
+model User {
+  id         Int         @id @default(autoincrement())
+  name       String
+  email      String      @unique
+  password   String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  interviews Interview[]
+}
+
+model Interview {
+  id              Int              @id @default(autoincrement())
+  userId          Int
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeURL       String
+  jobDescription  String?
+  status          String           @default("in_progress")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  questions       Question[]
+  codingChallenge CodingChallenge?
+  feedback        Feedback?
+}
+
+model Question {
+  id             Int       @id @default(autoincrement())
+  interviewId    Int
+  interview      Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  questionText   String
+  expectedAnswer String
+  userAnswer     String?
+  order          Int
+  createdAt      DateTime  @default(now())
+}
+
+model CodingChallenge {
+  id               Int       @id @default(autoincrement())
+  interviewId      Int       @unique
+  interview        Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  title            String
+  description      String
+  problemStatement String
+  constraints      String?
+  language         String
+  starterCode      String?
+  testCases        Json?
+  userCode         String?
+  passed           Boolean?
+  aiFeedback       String?
+  skipped          Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+}
+
+model Feedback {
+  id               Int       @id @default(autoincrement())
+  interviewId      Int       @unique
+  interview        Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  totalScore       Int
+  interviewScore   Int
+  codingScore      Int
+  strengths        String[]
+  weaknesses       String[]
+  detailedFeedback String
+  recommendation   String
+  createdAt        DateTime  @default(now())
 }

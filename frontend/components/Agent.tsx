@@ -2,89 +2,112 @@
 
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect, useState, useRef } from "react";
 
-enum CallStatus {
-  INACTIVE = "INACTIVE",
-  CONNECTING = "CONNECTING",
-  ACTIVE = "ACTIVE",
-  FINISHED = "FINISHED",
+interface InteractiveAgentProps {
+  textToSpeak?: string;
+  isListening?: boolean;
+  onUserSpeak?: (text: string) => void;
+  onFinishedSpeaking?: () => void;
 }
 
-const Agent = ({ userName }: AgentProps) => {
-  const callStatus = CallStatus.FINISHED;
-  const isSpeaking = true;
-  const messages = ["Whats your Name", "My Name is JOHN DOE "];
-  const lastMessage = messages[messages.length - 1];
+const Agent = ({ textToSpeak, isListening, onUserSpeak, onFinishedSpeaking }: InteractiveAgentProps) => {
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const synthRef = useRef<SpeechSynthesis | null>(null);
+  const recognitionRef = useRef<any>(null); // Type 'any' for WebkitSpeechRecognition
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      synthRef.current = window.speechSynthesis;
+      
+      // Initialize Speech Recognition
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = "en-US";
+
+        recognitionRef.current.onresult = (event: any) => {
+          let finalTranscript = "";
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+               // interim
+               setTranscript(event.results[i][0].transcript);
+            }
+          }
+          if (finalTranscript) {
+            setTranscript(finalTranscript);
+            if (onUserSpeak) onUserSpeak(finalTranscript);
+          }
+        };
+      }
+    }
+  }, []);
+
+  // Handle Text to Speech
+  useEffect(() => {
+    if (textToSpeak && synthRef.current) {
+      // Cancel previous speech
+      synthRef.current.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        if (onFinishedSpeaking) onFinishedSpeaking();
+      };
+      
+      synthRef.current.speak(utterance);
+    }
+  }, [textToSpeak]);
+
+  // Handle Listening State
+  useEffect(() => {
+    if (isListening && recognitionRef.current) {
+      if(!isSpeaking) { // Don't listen while speaking
+         try { recognitionRef.current.start(); } catch(e) {/* already started */}
+      }
+    } else if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch(e) {/* already stopped */}
+    }
+  }, [isListening, isSpeaking]);
+
   return (
-    <>
-      <div className="call-view">
-        <div className="card-interviewer">
-          <div className="avatar">
+    <div className="flex flex-col items-center gap-8">
+      <div className="relative">
+        <div className={cn(
+            "relative rounded-full p-2 transition-all duration-300",
+            isSpeaking ? "ring-4 ring-primary/50 scale-105" : "",
+            isListening ? "ring-4 ring-green-500/50" : ""
+        )}>
+           <div className="avatar size-40 relative">
             <Image
-              src="/ai-avatar.png"
-              alt="vapi"
-              width={65}
-              height={54}
-              className="object-cover"
+              src="/ai-avatar.png" 
+              alt="AI Interviewer"
+              fill
+              className="object-cover rounded-full"
             />
-            {isSpeaking && <span className="animate-speak"></span>}
           </div>
-          <h3>AI Interviewer</h3>
         </div>
         
-        {/* User Profile Card */}
-        <div className="card-border">
-          <div className="card-content">
-            <Image
-              src="/user-avatar.png"
-              alt="profile-image"
-              width={539}
-              height={539}
-              className="rounded-full object-cover size-30"
-            />
-            <h3>{userName}</h3>
-          </div>
+        {/* Status Indicators */}
+        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
+           {isSpeaking && <span className="text-primary text-sm font-semibold animate-pulse">Speaking...</span>}
+           {isListening && <span className="text-green-600 text-sm font-semibold animate-pulse">Listening...</span>}
         </div>
       </div>
 
-      {messages.length > 0 && (
-        <div className="transcript-border">
-          <div className="transcript">
-            <p
-              key={lastMessage}
-              className={cn(
-                "transition-opacity duration-500 opacity-0",
-                "animate-fadeIn opacity-100"
-              )}
-            >
-              {lastMessage}
-            </p>
-          </div>
+      {/* Transcript Area */}
+      {transcript && (
+        <div className="glassmorphism p-4 rounded-xl max-w-lg w-full text-center min-h-[100px] flex items-center justify-center">
+          <p className="text-lg text-foreground/80">"{transcript}"</p>
         </div>
       )}
-
-      <div className="w-full flex justify-center">
-        {callStatus !== "ACTIVE" ? (
-          <button className="relative btn-call">
-            <span
-              className={cn(
-                "absolute animate-ping rounded-full opacity-75",
-                callStatus !== "CONNECTING" && "hidden"
-              )}
-            />
-
-            <span className="relative">
-              {callStatus === "INACTIVE" || callStatus === "FINISHED"
-                ? "Call"
-                : ". . ."}
-            </span>
-          </button>
-        ) : (
-          <button className="btn-disconnect">End</button>
-        )}
-      </div>
-    </>
+    </div>
   );
 };
 
