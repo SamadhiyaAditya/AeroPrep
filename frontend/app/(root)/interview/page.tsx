@@ -1,13 +1,19 @@
-import Agent from '@/components/Agent'
-import React from 'react'
+"use client";
 
-const page = () => {
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+
+export default function InterviewPage() {
+  const router = useRouter();
+  
+  useEffect(() => {
+    // Redirect to the new interview creation page
+    router.replace('/interview/create');
+  }, [router]);
+  
   return (
-    <>
-     <h3>Interview Generation</h3>
-     <Agent username="You" userId="user1"  type = "generate" />
-    </>
-  )
+    <div className="p-10 text-center">
+      <p>Redirecting to interview creation...</p>
+    </div>
+  );
 }
-
-export default page
