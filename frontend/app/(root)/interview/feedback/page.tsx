@@ -1,48 +1,75 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { generateFeedback, saveInterviewCoding, saveInterviewFeedback } from '@/lib/api';
 import { isAuthenticated } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function FeedbackPage() {
   const router = useRouter();
   const [feedback, setFeedback] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
+  const hasStartedFetch = useRef(false);
 
   useEffect(() => {
-    const fetchFeedback = async () => {
+    // Prevent duplicate fetches on re-render or back navigation
+    if (hasStartedFetch.current) return;
+    hasStartedFetch.current = true;
+    
+    // Check if feedback already exists in localStorage (cached from previous generation)
+    const cachedFeedback = localStorage.getItem('generatedFeedback');
+    if (cachedFeedback) {
       try {
-        const interviewId = localStorage.getItem('interviewId');
-        const interviewQuestions = JSON.parse(localStorage.getItem('interviewQuestions') || '[]');
-        const interviewAnswers = JSON.parse(localStorage.getItem('interviewAnswers') || '[]');
+        const parsed = JSON.parse(cachedFeedback);
+        setFeedback(parsed);
+        setLoading(false);
+        setSaved(true);
+        return;
+      } catch (e) {
+        // Invalid cache, continue to generate
+      }
+    }
+    
+    fetchFeedback();
+  }, []);
+
+  const fetchFeedback = async () => {
+    try {
+      const interviewId = localStorage.getItem('interviewId');
+      const interviewQuestions = JSON.parse(localStorage.getItem('interviewQuestions') || '[]');
+      const interviewAnswers = JSON.parse(localStorage.getItem('interviewAnswers') || '[]');
+      
+      const interviewData = {
+          questions: interviewQuestions,
+          answers: interviewAnswers
+      };
+      
+      const codingChallenge = JSON.parse(localStorage.getItem('codingChallenge') || '{}');
+      const codingResult = JSON.parse(localStorage.getItem('codingResult') || '{}');
+      const codingCode = localStorage.getItem('codingCode') || "";
+      
+      const codingData = {
+          challenge: codingChallenge,
+          code: codingCode,
+          result: codingResult
+      };
+      
+      // Generate feedback from AI
+      const data = await generateFeedback(interviewData, codingData);
+      setFeedback(data);
+      
+      // Cache the feedback to prevent regeneration on back navigation
+      localStorage.setItem('generatedFeedback', JSON.stringify(data));
+      
+      // Save to database if authenticated
+      if (isAuthenticated() && interviewId) {
+        const id = parseInt(interviewId);
         
-        const interviewData = {
-            questions: interviewQuestions,
-            answers: interviewAnswers
-        };
-        
-        const codingChallenge = JSON.parse(localStorage.getItem('codingChallenge') || '{}');
-        const codingResult = JSON.parse(localStorage.getItem('codingResult') || '{}');
-        const codingCode = localStorage.getItem('codingCode') || "";
-        
-        const codingData = {
-            challenge: codingChallenge,
-            code: codingCode,
-            result: codingResult
-        };
-        
-        // Generate feedback from AI
-        const data = await generateFeedback(interviewData, codingData);
-        setFeedback(data);
-        
-        // Save to database if authenticated
-        if (isAuthenticated() && interviewId) {
-          const id = parseInt(interviewId);
-          
+        try {
           // Save coding result
           await saveInterviewCoding(id, codingChallenge, codingCode, codingResult, codingResult?.skipped || false);
           
@@ -50,16 +77,47 @@ export default function FeedbackPage() {
           await saveInterviewFeedback(id, data);
           
           setSaved(true);
+          toast.success('Interview saved to your history!');
+        } catch (saveError) {
+          console.error('Failed to save to database:', saveError);
+          toast.error('Failed to save interview');
         }
-      } catch (error) {
-        console.error("Failed to generate feedback", error);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Failed to generate feedback", error);
+      toast.error('Failed to generate feedback');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const goHome = () => {
+    // Clear interview session data (but keep feedback cached)
+    localStorage.removeItem('interviewQuestions');
+    localStorage.removeItem('interviewAnswers');
+    localStorage.removeItem('codingChallenge');
+    localStorage.removeItem('codingResult');
+    localStorage.removeItem('codingCode');
+    localStorage.removeItem('resumeURL');
+    localStorage.removeItem('interviewId');
+    localStorage.removeItem('generatedFeedback');
     
-    fetchFeedback();
-  }, []);
+    router.push('/');
+  };
+
+  const startNewInterview = () => {
+    // Clear all interview data including feedback cache
+    localStorage.removeItem('interviewQuestions');
+    localStorage.removeItem('interviewAnswers');
+    localStorage.removeItem('codingChallenge');
+    localStorage.removeItem('codingResult');
+    localStorage.removeItem('codingCode');
+    localStorage.removeItem('resumeURL');
+    localStorage.removeItem('interviewId');
+    localStorage.removeItem('generatedFeedback');
+    
+    router.push('/interview/create');
+  };
 
   if (loading) {
     return (
@@ -67,6 +125,14 @@ export default function FeedbackPage() {
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
         <p className="text-lg">Generating Comprehensive Report...</p>
         <p className="text-sm text-muted-foreground mt-2">(AI is analyzing your interview performance)</p>
+        
+        <Button 
+          onClick={goHome} 
+          variant="outline" 
+          className="mt-8 cursor-pointer"
+        >
+          Go Home (Score will be saved in background)
+        </Button>
       </div>
     );
   }
@@ -131,10 +197,15 @@ export default function FeedbackPage() {
       </div>
 
       <div className="flex justify-center gap-4 pt-8">
-          <Button onClick={() => router.push('/')} size="lg" variant="outline">Back to Home</Button>
+          <Button onClick={goHome} size="lg" variant="outline" className="cursor-pointer">
+            🏠 Back to Home
+          </Button>
+          <Button onClick={startNewInterview} size="lg" className="cursor-pointer">
+            🔄 Start New Interview
+          </Button>
           {isAuthenticated() && (
-            <Button asChild size="lg">
-              <Link href="/interview/history">View History</Link>
+            <Button asChild size="lg" variant="secondary" className="cursor-pointer">
+              <Link href="/interview/history">📊 View History</Link>
             </Button>
           )}
       </div>

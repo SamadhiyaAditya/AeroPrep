@@ -25,31 +25,55 @@ export default function CodingRoundPage() {
   const [evaluating, setEvaluating] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('javascript');
   const [isNavigating, setIsNavigating] = useState(false);
+  const hasStartedFetch = React.useRef(false);
 
   useEffect(() => {
-    const fetchChallenge = async () => {
-       setLoading(true);
-       try {
-           const resumeURL = localStorage.getItem('resumeURL');
-           if (!resumeURL) {
-               alert("Resume URL missing. Please start a new interview.");
-               router.push('/interview/create');
-               return;
-           }
-           
-           const data = await generateCodingChallenge(resumeURL);
-           setChallenge(data);
-           setCode(data.starterCode || "// Write your solution here");
-           setSelectedLanguage(data.language || 'javascript');
-       } catch (error) {
-           console.error("Failed to load challenge", error);
-       } finally {
-           setLoading(false);
-       }
-    };
+    // Prevent duplicate fetches on re-render or back navigation
+    if (hasStartedFetch.current) return;
+    hasStartedFetch.current = true;
+    
+    // Check if challenge already exists in localStorage (cached)
+    const cachedChallenge = localStorage.getItem('codingChallenge');
+    if (cachedChallenge) {
+      try {
+        const parsed = JSON.parse(cachedChallenge);
+        if (parsed.title && parsed.title !== 'Skipped') {
+          setChallenge(parsed);
+          setCode(parsed.starterCode || "// Write your solution here");
+          setSelectedLanguage(parsed.language || 'javascript');
+          return;
+        }
+      } catch (e) {
+        // Invalid cache, continue to generate
+      }
+    }
     
     fetchChallenge();
   }, []);
+
+  const fetchChallenge = async () => {
+     setLoading(true);
+     try {
+         const resumeURL = localStorage.getItem('resumeURL');
+         if (!resumeURL) {
+             alert("Resume URL missing. Please start a new interview.");
+             router.push('/interview/create');
+             return;
+         }
+         
+         const data = await generateCodingChallenge(resumeURL);
+         setChallenge(data);
+         setCode(data.starterCode || "// Write your solution here");
+         setSelectedLanguage(data.language || 'javascript');
+         
+         // Cache the challenge to localStorage
+         localStorage.setItem('codingChallenge', JSON.stringify(data));
+     } catch (error) {
+         console.error("Failed to load challenge", error);
+     } finally {
+         setLoading(false);
+     }
+  };
 
   const handleRun = async () => {
       if (!challenge || evaluating) return;
