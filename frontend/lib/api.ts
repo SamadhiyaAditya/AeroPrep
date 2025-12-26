@@ -15,12 +15,12 @@ function getAuthHeaders() {
 // PUBLIC AI ROUTES
 // ============================================
 
-export async function generateQuestions(resumeURL: string, jobDescription: string = '') {
+export async function generateQuestions(resumeURL: string, jobDescription: string = '', resumeText: string = '') {
   try {
     const response = await fetch(`${API_BASE_URL}/generate-questions`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ resumeURL, jobDescription }),
+      body: JSON.stringify({ resumeURL, jobDescription, resumeText }),
     });
 
     if (!response.ok) {
@@ -36,12 +36,12 @@ export async function generateQuestions(resumeURL: string, jobDescription: strin
   }
 }
 
-export async function generateCodingChallenge(resumeURL: string) {
+export async function generateCodingChallenge(resumeURL: string, resumeText: string = '') {
   try {
     const response = await fetch(`${API_BASE_URL}/generate-coding-question`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ resumeURL }),
+      body: JSON.stringify({ resumeURL, resumeText }),
     });
     const data = await response.json();
     return data.challenge;
@@ -85,11 +85,12 @@ export async function generateFeedback(interviewData: any, codingData: any) {
 // INTERVIEW STORAGE ROUTES (Protected)
 // ============================================
 
-export async function createInterview(resumeURL: string, jobDescription: string = '') {
+export async function createInterview(resumeURL: string, jobDescription: string = '', resumeText: string = '') {
+  // Pass resumeText to backend so it can skip PDF extraction if valid text is provided
   const response = await fetch(`${API_BASE_URL}/interviews`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ resumeURL, jobDescription }),
+    body: JSON.stringify({ resumeURL, jobDescription, resumeText }),
   });
   
   if (!response.ok) {

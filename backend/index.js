@@ -1,6 +1,15 @@
 require('dotenv').config();
 const express = require('express');
+const axios = require('axios');
+const ImageKit = require("imagekit");
 const cors = require('cors');
+
+const imagekit = new ImageKit({
+    publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+    privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
+});
+
 
 // Services
 const { extractTextFromPdf } = require('./services/pdfService');
@@ -82,17 +91,30 @@ app.get('/auth/me', authMiddleware, async (req, res) => {
 
 // Create interview and generate questions
 app.post('/interviews', authMiddleware, async (req, res) => {
-  const { resumeURL, jobDescription } = req.body;
+  const { resumeURL, jobDescription, resumeText } = req.body;
   
-  if (!resumeURL) {
-    return res.status(400).json({ error: 'resumeURL is required' });
+  // Require either resumeURL or resumeText/jobDescription
+  if (!resumeURL && !resumeText && !jobDescription) {
+    return res.status(400).json({ error: 'resumeURL, resumeText, or jobDescription is required' });
   }
   
   try {
     console.log(`Creating interview for user ${req.userId}`);
     
-    // Extract text and generate questions
-    const text = await extractTextFromPdf(resumeURL);
+    // Extract text from PDF OR use provided text
+    let text = resumeText || "";
+    if (resumeURL && !text && !resumeURL.includes('manual-entry.local')) {
+        try {
+            text = await extractTextFromPdf(resumeURL);
+        } catch (err) {
+            console.warn("Failed to extract PDF, using job description fallback", err);
+            text = jobDescription || "General Interview";
+        }
+    } else if (!text) {
+        // Fallback if no text provided and URL is placeholder
+        text = jobDescription;
+    }
+
     const questions = await generateQuestions(text, jobDescription);
     
     // Save to database
@@ -176,17 +198,23 @@ app.get('/interviews/:id', authMiddleware, async (req, res) => {
 // ============================================
 
 app.post('/generate-questions', async (req, res) => {
-  const { resumeURL, jobDescription } = req.body;
+  const { resumeURL, jobDescription, resumeText } = req.body;
 
-  if (!resumeURL) {
-    return res.status(400).json({ error: 'resumeURL is required' });
+  if (!resumeURL && !resumeText) {
+    return res.status(400).json({ error: 'resumeURL or resumeText is required' });
   }
 
   try {
-    console.log(`Processing resume from: ${resumeURL}`);
-    const text = await extractTextFromPdf(resumeURL);
-    console.log('PDF text extracted successfully.');
+    let text = resumeText || "";
+    if (resumeURL && !text) {
+        console.log(`Processing resume from: ${resumeURL}`);
+        text = await extractTextFromPdf(resumeURL);
+        console.log('PDF text extracted successfully.');
+    }
     
+    // If we still have no text (e.g. empty resumeText), ensure we have something
+    if (!text && jobDescription) text = "No resume provided. Focus on Job Description.";
+
     const questions = await generateQuestions(text, jobDescription);
     console.log('Questions generated successfully.');
     
@@ -198,12 +226,16 @@ app.post('/generate-questions', async (req, res) => {
 });
 
 app.post('/generate-coding-question', async (req, res) => {
-  const { resumeURL } = req.body;
+  const { resumeURL, resumeText } = req.body;
   
-  if (!resumeURL) return res.status(400).json({ error: 'resumeURL is required' });
+  if (!resumeURL && !resumeText) return res.status(400).json({ error: 'resumeURL or resumeText is required' });
 
   try {
-    const text = await extractTextFromPdf(resumeURL);
+    let text = resumeText || "";
+    if (resumeURL && !text) {
+        text = await extractTextFromPdf(resumeURL);
+    }
+    
     const challenge = await generateCodingChallenge(text);
     res.json({ challenge });
   } catch (error) {
@@ -244,6 +276,20 @@ app.post('/generate-feedback', async (req, res) => {
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ============================================
+// IMAGEKIT AUTH
+// ============================================
+
+app.get('/imagekit-auth', function (req, res) {
+    try {
+        var result = imagekit.getAuthenticationParameters();
+        res.send(result);
+    } catch (error) {
+        console.error("ImageKit Auth Error:", error);
+        res.status(500).send("Auth Failed");
+    }
 });
 
 const PORT = process.env.PORT || 3000;

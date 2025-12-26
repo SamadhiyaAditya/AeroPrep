@@ -24,7 +24,7 @@ model Interview {
   id              Int              @id @default(autoincrement())
   userId          Int
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resumeURL       String
+  resumeURL       String?
   jobDescription  String?
   status          String           @default("in_progress")
   createdAt       DateTime         @default(now())

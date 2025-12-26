@@ -1,9 +1,9 @@
 require('dotenv').config();
 
 // OpenRouter API configuration
-// Uses Xiaomi MiMo v2 Flash - a free model
+// Switched to Nvidia Nemotron-3 Nano - fastest and high quality free model
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'xiaomi/mimo-v2-flash:free'; // Free model
+const MODEL = 'nvidia/nemotron-3-nano-30b-a3b:free';
 
 /**
  * Helper function to call OpenRouter API
@@ -43,10 +43,29 @@ async function callOpenRouter(prompt, operationName = 'AI Call') {
 }
 
 /**
- * Clean JSON from markdown code blocks
+ * Clean JSON from markdown code blocks and extract the JSON object.
  */
 function cleanJsonResponse(text) {
-  return text.replace(/```json/g, '').replace(/```/g, '').trim();
+  let cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+  
+  // Attempt to find the first '{' or '[' and last '}' or ']'
+  const firstOpen = cleaned.search(/[{\[]/);
+  const lastClose = cleaned.search(/[}\]]$/); // Search from end? No, regex searches from start.
+  
+  // Better approach: find first '{' and the last '}'
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  const startArr = cleaned.indexOf('[');
+  const endArr = cleaned.lastIndexOf(']');
+
+  if (start !== -1 && end !== -1 && (start < startArr || startArr === -1)) {
+       return cleaned.substring(start, end + 1);
+  }
+  if (startArr !== -1 && endArr !== -1) {
+       return cleaned.substring(startArr, endArr + 1);
+  }
+  
+  return cleaned;
 }
 
 /**
@@ -54,21 +73,29 @@ function cleanJsonResponse(text) {
  */
 async function generateQuestions(resumeText, jobDescription = "") {
   try {
-    const prompt = `You are an expert technical interviewer. Based on the candidate's resume and the job description provided below, generate exactly 10 relevant interview questions.
+    const prompt = `You are an expert technical interviewer at a top-tier tech company (e.g., Google, Netflix, Amazon). 
+    Your goal is to assess the candidate deeply, looking for signals of seniority, problem-solving ability, and system design thinking.
     
-The questions should be a mix of:
-1. Experience-based questions (validating their resume).
-2. Technical questions (testing skills required for the job).
-3. Behavioral questions (culture fit).
+    Based on the candidate's resume and the job description provided below, generate exactly 10 relevant interview questions.
+    
+    CRITICAL GUIDELINES:
+    1. AVOID generic trivia (e.g., "What is a hook?"). Ask "How" and "Why" questions.
+    2. Focus on trade-offs, architectural decisions, and deep conceptual understanding.
+    3. Include behavioral questions that probe leadership and conflict resolution in a technical context.
+    
+    The questions should be a mix of:
+    1. Experience-based (Deep dive into their specific resume projects: "Why did you choose X over Y?").
+    2. System Design & Architecture (Scalability, performance, reliability).
+    3. Behavioral (Culture fit, mentorship, handling failure).
 
-Return ONLY a valid JSON array where each object has "question" and "answer" (expected answer or key points) fields.
-Example format: [{"question": "...", "answer": "..."}]
-
-RESUME TEXT:
-${resumeText}
-
-JOB DESCRIPTION:
-${jobDescription || "Not provided (Focus on general software engineering skills based on resume)"}`;
+    Return ONLY a valid JSON array where each object has "question" and "answer" (key points expected in a good answer) fields.
+    NO introductory text. NO markdown formatting. Just the raw JSON.
+    
+    RESUME TEXT:
+    ${resumeText}
+    
+    JOB DESCRIPTION:
+    ${jobDescription || "Not provided (Focus on general software engineering skills based on resume)"}`;
 
     const response = await callOpenRouter(prompt, 'Generate Questions');
     const cleanedText = cleanJsonResponse(response);
@@ -90,7 +117,8 @@ Then, generate a medium-difficulty coding challenge suitable for a live intervie
 RESUME TEXT:
 ${resumeText.substring(0, 1500)}
 
-Return ONLY a valid JSON object with this structure:
+Return ONLY a valid JSON object. Do not include any explanation.
+Structure:
 {
   "language": "javascript",
   "title": "Problem Title",
@@ -137,7 +165,7 @@ TASK:
 Analyze the user's code. Determine if it correctly solves the problem and passes all test cases.
 Check for time complexity and edge cases.
 
-Return ONLY a valid JSON object:
+Return ONLY a valid JSON object. NO conversational text.
 {
   "passed": true or false,
   "feedback": "Detailed feedback on correctness, efficiency, and cleanliness.",

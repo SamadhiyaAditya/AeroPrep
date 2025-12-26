@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { saveInterviewAnswers } from '@/lib/api';
 import { isAuthenticated } from '@/lib/auth';
+import { Bot, Loader2, Flag, Code2, CheckCircle, SkipForward, ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface Question {
   question: string;
@@ -82,14 +83,21 @@ export default function InterviewSessionPage() {
     router.push('/interview/feedback');
   };
 
-  if (questions.length === 0) return <div className="p-10 text-center">Loading Interview...</div>;
+  if (questions.length === 0) return (
+    <div className="p-10 text-center flex flex-col items-center justify-center min-h-screen">
+       <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+       <p>Loading Interview...</p>
+    </div>
+  );
 
   // Show coding round choice screen
   if (showCodingChoice) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-950/50">
         <div className="max-w-xl w-full bg-card border rounded-xl p-8 text-center">
-          <div className="text-5xl mb-6">💻</div>
+          <div className="flex justify-center mb-6">
+            <Code2 className="h-16 w-16 text-primary" />
+          </div>
           <h2 className="text-2xl font-bold mb-4">Q&A Complete!</h2>
           <p className="text-muted-foreground mb-8">
             Great job answering the interview questions! Would you like to take the coding round?
@@ -102,7 +110,11 @@ export default function InterviewSessionPage() {
               className="w-full py-6 text-lg bg-green-600 hover:bg-green-700 cursor-pointer"
               disabled={isNavigating}
             >
-              {isNavigating ? '⏳ Loading...' : '✅ Yes, Take Coding Round'}
+              {isNavigating ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...</>
+              ) : (
+                <><CheckCircle className="mr-2 h-5 w-5" /> Yes, Take Coding Round</>
+              )}
             </Button>
             
             <Button 
@@ -112,7 +124,11 @@ export default function InterviewSessionPage() {
               className="w-full py-6 text-lg cursor-pointer"
               disabled={isNavigating}
             >
-              {isNavigating ? '⏳ Loading...' : '⏭️ Skip & View Feedback'}
+              {isNavigating ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...</>
+              ) : (
+                <><SkipForward className="mr-2 h-5 w-5" /> Skip & View Feedback</>
+              )}
             </Button>
           </div>
           
@@ -130,7 +146,10 @@ export default function InterviewSessionPage() {
         
         {/* Header / Progress */}
         <div className="w-full flex justify-between items-center px-4">
-           <h2 className="text-xl font-semibold text-muted-foreground">
+           <Button variant="ghost" size="sm" onClick={() => router.push('/')} className="cursor-pointer">
+             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+           </Button>
+           <h2 className="text-xl font-semibold text-muted-foreground hidden sm:block">
              Question {currentIndex + 1} / {questions.length}
            </h2>
            {!isStarted && (
@@ -153,7 +172,7 @@ export default function InterviewSessionPage() {
           <div className="bg-card border rounded-lg p-6 shadow-sm mb-6">
              <div className="flex items-start gap-4">
                 <div className="min-w-[50px] h-[50px] rounded-full bg-primary/10 flex items-center justify-center">
-                   <span className="text-2xl">🤖</span>
+                   <Bot className="h-8 w-8 text-primary" />
                 </div>
                 <div>
                    <h3 className="font-semibold mb-1">AI Interviewer</h3>
@@ -182,7 +201,13 @@ export default function InterviewSessionPage() {
                  className="btn-primary min-w-[200px] py-6 text-lg cursor-pointer"
                  disabled={!userAnswer.trim() || isSaving} 
                >
-                 {isSaving ? '⏳ Saving...' : (currentIndex === questions.length - 1 ? "🏁 Finish Q&A" : "Next Question →")}
+                 {isSaving ? (
+                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
+                 ) : (currentIndex === questions.length - 1 ? (
+                   <><Flag className="mr-2 h-4 w-4" /> Finish Q&A</>
+                 ) : (
+                   <>Next Question <ArrowRight className="ml-2 h-4 w-4" /></>
+                 ))}
                </Button>
              </div>
            )}
