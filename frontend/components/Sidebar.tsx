@@ -13,7 +13,8 @@ import {
   User,
   HelpCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Snowflake
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,11 @@ import { logout } from "@/lib/auth";
 interface SidebarProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   user: any;
+  isSnowing: boolean;
+  toggleSnow: () => void;
 }
 
-export const Sidebar = ({ user }: SidebarProps) => {
+export const Sidebar = ({ user, isSnowing, toggleSnow }: SidebarProps) => {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   
@@ -161,6 +164,22 @@ export const Sidebar = ({ user }: SidebarProps) => {
               <HelpCircle className={cn(isCollapsed ? "h-5 w-5" : "h-4 w-4 mr-3")} />
               {!isCollapsed && <span className="whitespace-nowrap">Help & Support</span>}
            </Link>
+           
+           <button 
+             onClick={toggleSnow}
+             className={cn(
+               "flex items-center w-full py-3 text-sm transition-colors mt-1 group/snow", 
+               isCollapsed ? "justify-center" : "px-4",
+               isSnowing ? "text-blue-300" : "text-gray-500 hover:text-white"
+             )}
+             title={isSnowing ? "Stop Snow" : "Let it Snow!"}
+           >
+              <Snowflake className={cn(
+                isCollapsed ? "h-5 w-5" : "h-4 w-4 mr-3", 
+                isSnowing && "animate-spin-slow" 
+              )} />
+              {!isCollapsed && <span className="whitespace-nowrap">Let it Snow</span>}
+           </button>
         </div>
         
         {/* User Section */}

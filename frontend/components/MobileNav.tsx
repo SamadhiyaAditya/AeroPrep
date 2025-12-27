@@ -13,7 +13,8 @@ import {
   Menu,
   X,
   User,
-  HelpCircle
+  HelpCircle,
+  Snowflake
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
@@ -21,9 +22,11 @@ import { logout } from "@/lib/auth";
 
 interface MobileNavProps {
   user: any;
+  isSnowing: boolean;
+  toggleSnow: () => void;
 }
 
-export const MobileNav = ({ user }: MobileNavProps) => {
+export const MobileNav = ({ user, isSnowing, toggleSnow }: MobileNavProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const isLocked = pathname.includes('/interview/session') || pathname.includes('/interview/coding');
@@ -107,6 +110,22 @@ export const MobileNav = ({ user }: MobileNavProps) => {
                   {route.label}
                 </Link>
               ))}
+
+              <button
+                onClick={() => {
+                  toggleSnow();
+                  setIsOpen(false);
+                }}
+                className={cn(
+                  "flex items-center w-full px-4 py-3 rounded-xl transition-all duration-200 font-medium",
+                  isSnowing 
+                    ? "bg-blue-500/10 text-blue-300" 
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                )}
+              >
+                 <Snowflake className={cn("h-5 w-5 mr-3", isSnowing && "animate-spin-slow")} />
+                 Let it Snow
+              </button>
            </div>
            
            <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
