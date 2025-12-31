@@ -70,7 +70,9 @@ export async function login(email: string, password: string) {
 }
 
 export async function logout() {
-  removeToken();
+  if (typeof window !== 'undefined') {
+    localStorage.clear();
+  }
 }
 
 export async function getCurrentUser() {

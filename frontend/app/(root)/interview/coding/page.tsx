@@ -157,7 +157,13 @@ export default function CodingRoundPage() {
     }
   }, [selectedLanguage]);
 
-  const fetchChallenge = async () => {
+  // Helper to fix double escaped newlines from AI
+  const formatContent = (content: string) => {
+    if (!content) return "";
+    return content.replace(/\\n/g, '\n');
+  };
+
+  const fetchChallenge = async (retryCount = 0) => {
      setLoading(true);
      setChallenge(null);
      setOutput(null);
@@ -171,11 +177,17 @@ export default function CodingRoundPage() {
          if (!resumeURL && !resumeText) return;
          
          const data = await generateCodingChallenge(resumeURL, resumeText);
+         
+         // Basic validation of challenge data
+         if (!data || !data.title || !data.problemStatement) {
+           throw new Error("Invalid challenge data received");
+         }
+
          setChallenge(data);
          
          // Prefer generated starter code if available, else boilerplate
          const starter = data.starterCode || BOILERPLATES[data.language || 'javascript'] || BOILERPLATES['javascript'];
-         setCode(starter);
+         setCode(formatContent(starter));
          
          if (data.language && BOILERPLATES[data.language]) {
              setSelectedLanguage(data.language);
@@ -183,9 +195,20 @@ export default function CodingRoundPage() {
          
          localStorage.setItem('currentCodingChallenge', JSON.stringify(data));
      } catch (error) {
-         console.error("Failed to load challenge", error);
+         console.error(`Failed to load challenge (Attempt ${retryCount + 1}):`, error);
+         
+         if (retryCount < 2) {
+           // Retry after a small delay
+           setTimeout(() => fetchChallenge(retryCount + 1), 1000);
+           return;
+         }
+         
+         alert("Failed to generate a coding challenge. Please try again or skip.");
+         setCode("// Failed to load challenge. Please refresh or try again.");
      } finally {
-         setLoading(false);
+         if (retryCount >= 2 || (challenge && !loading)) {
+           setLoading(false);
+         }
      }
   };
 
@@ -338,24 +361,24 @@ export default function CodingRoundPage() {
           </div>
           
           <div className="prose dark:prose-invert max-w-none text-sm">
-              <p className="mb-4 text-base">{challenge.description}</p>
+              <p className="mb-4 text-base">{formatContent(challenge.description)}</p>
               
               <div className="bg-muted p-4 rounded-md mb-4 border border-border">
                   <h3 className="font-semibold mb-2">Problem Statement</h3>
-                  <div className="whitespace-pre-wrap font-mono text-xs">{challenge.problemStatement}</div>
+                  <div className="whitespace-pre-wrap font-mono text-xs">{formatContent(challenge.problemStatement)}</div>
               </div>
 
               <h3 className="font-semibold mt-4 mb-2">Constraints</h3>
               <ul className="list-disc pl-5 mb-4 text-muted-foreground">
-                {(challenge.constraints || "No specific constraints provided.").split('\n').map((c: string, i: number) => <li key={i}>{c}</li>)}
+                {(formatContent(challenge.constraints) || "No specific constraints provided.").split('\n').map((c: string, i: number) => <li key={i}>{c}</li>)}
               </ul>
 
               <h3 className="font-semibold mt-4 mb-2">Example Cases</h3>
               <div className="space-y-2">
                   {challenge.testCases && Array.isArray(challenge.testCases) ? challenge.testCases.map((tc:any, i:number) => (
                       <div key={i} className="bg-muted/50 p-2 rounded border border-border font-mono text-xs">
-                          <span className="text-muted-foreground">In:</span> {tc.input} <br/>
-                          <span className="text-muted-foreground">Out:</span> {tc.expectedOutput}
+                          <span className="text-muted-foreground">In:</span> {formatContent(tc.input)} <br/>
+                          <span className="text-muted-foreground">Out:</span> {formatContent(tc.expectedOutput)}
                       </div>
                   )) : (
                       <p className="text-muted-foreground italic text-sm">No example cases provided.</p>

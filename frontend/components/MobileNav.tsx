@@ -33,7 +33,7 @@ export const MobileNav = ({ user, isSnowing, toggleSnow }: MobileNavProps) => {
 
   const handleLogout = () => {
     logout();
-    window.location.href = "/sign-in";
+    window.location.href = "/";
   };
 
   const routes = [

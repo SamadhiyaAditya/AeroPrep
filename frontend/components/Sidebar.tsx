@@ -41,7 +41,7 @@ export const Sidebar = ({ user, isSnowing, toggleSnow }: SidebarProps) => {
       return;
     }
     logout();
-    window.location.href = "/sign-in";
+    window.location.href = "/";
   };
 
   const routes = [

@@ -45,14 +45,14 @@ async function login(email, password) {
   });
   
   if (!user) {
-    throw new Error('Invalid email or password');
+    throw new Error('Email not found. Please register first.');
   }
   
   // Verify password
   const isValid = await bcrypt.compare(password, user.password);
   
   if (!isValid) {
-    throw new Error('Invalid email or password');
+    throw new Error('Incorrect password. Please try again.');
   }
   
   // Generate JWT token
