@@ -43,6 +43,12 @@ export async function generateCodingChallenge(resumeURL: string, resumeText: str
       headers: getAuthHeaders(),
       body: JSON.stringify({ resumeURL, resumeText }),
     });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to generate coding challenge');
+    }
+    
     const data = await response.json();
     return data.challenge;
   } catch (error) {

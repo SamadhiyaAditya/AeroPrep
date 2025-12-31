@@ -50,17 +50,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
     } catch (error: any) {
       console.error(error);
       const message = error.message || "An error occurred";
-      
-      // Handle field-level errors
-      if (message.toLowerCase().includes('email')) {
-        form.setError('email', { message });
-      } else if (message.toLowerCase().includes('password')) {
-        form.setError('password', { message });
-      } else if (message.toLowerCase().includes('name')) {
-        form.setError('name', { message });
-      } else {
-        toast.error(message);
-      }
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

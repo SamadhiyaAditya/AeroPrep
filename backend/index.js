@@ -29,9 +29,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ============================================
 // HEALTH CHECK (for cron job keep-alive)
-// ============================================
 app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'AI Interview Coach API is running', timestamp: new Date().toISOString() });
 });
@@ -40,9 +38,9 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
 
-// ============================================
+
 // AUTH ROUTES
-// ============================================
+
 
 app.post('/auth/register', async (req, res) => {
   const { name, email, password } = req.body;
@@ -85,9 +83,7 @@ app.get('/auth/me', authMiddleware, async (req, res) => {
   }
 });
 
-// ============================================
 // INTERVIEW ROUTES (Protected)
-// ============================================
 
 // Create interview and generate questions
 app.post('/interviews', authMiddleware, async (req, res) => {
@@ -193,9 +189,7 @@ app.get('/interviews/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// ============================================
 // PUBLIC AI ROUTES (for backward compatibility)
-// ============================================
 
 app.post('/generate-questions', async (req, res) => {
   const { resumeURL, jobDescription, resumeText } = req.body;
@@ -270,17 +264,7 @@ app.post('/generate-feedback', async (req, res) => {
   }
 });
 
-// ============================================
-// HEALTH CHECK
-// ============================================
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// ============================================
 // IMAGEKIT AUTH
-// ============================================
 
 app.get('/imagekit-auth', function (req, res) {
     try {

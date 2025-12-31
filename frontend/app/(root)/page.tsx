@@ -76,25 +76,25 @@ export default function HomePage() {
             <div className="z-10 relative max-w-2xl">
                 <h2 className="text-4xl sm:text-5xl font-bold leading-tight mb-4 text-white">
                     {user ? `Welcome back, ${user.name.split(' ')[0]}` : "Elevate Your Career."}
-                </h2>
+            </h2>
                 <p className="text-lg text-light-100 mb-8 max-w-lg">
-                    {user 
+                {user 
                         ? "Ready to reach new heights? Your preparation plan for interview success is ready." 
                         : "Master your technical interviews with our precision-engineered interview simulator for your career."}
-                </p>
-                
-                <div className="flex flex-wrap gap-4">
+            </p>
+            
+            <div className="flex flex-wrap gap-4">
                     <Link href={user ? "/interview/create" : "/sign-up"} className="btn-primary flex items-center gap-2">
                         <Rocket className="h-4 w-4" /> 
-                        {user ? "Start New Interview" : "Start Preparation"}
-                    </Link>
-                    {user && (
+                    {user ? "Start New Interview" : "Start Preparation"}
+                </Link>
+                {user && (
                         <Link href="/interview/history" className="btn-secondary flex items-center gap-2">
                             <BarChart2 className="h-4 w-4" /> History
-                        </Link>
-                    )}
-                </div>
+                    </Link>
+                )}
             </div>
+        </div>
             
             {/* Abstract Decorative Element */}
             <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-primary-200/10 to-transparent pointer-events-none hidden md:block"></div>

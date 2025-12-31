@@ -5,9 +5,7 @@ const { prisma } = require('./prismaClient');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const SALT_ROUNDS = 10;
 
-/**
- * Register a new user
- */
+// Register a new user
 async function register(name, email, password) {
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({
@@ -35,9 +33,7 @@ async function register(name, email, password) {
   return userWithoutPassword;
 }
 
-/**
- * Login user and return JWT token
- */
+// Login user and return JWT token
 async function login(email, password) {
   // Find user
   const user = await prisma.user.findUnique({
@@ -70,9 +66,7 @@ async function login(email, password) {
   };
 }
 
-/**
- * Verify JWT token - returns user data if valid
- */
+// Verify JWT token - returns user data if valid
 function verifyToken(token) {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
@@ -82,9 +76,7 @@ function verifyToken(token) {
   }
 }
 
-/**
- * Express middleware to protect routes
- */
+// Express middleware to protect routes
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   
@@ -104,9 +96,7 @@ function authMiddleware(req, res, next) {
   }
 }
 
-/**
- * Get user by ID
- */
+// Get user by ID
 async function getUserById(userId) {
   const user = await prisma.user.findUnique({
     where: { id: userId }

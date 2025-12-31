@@ -265,16 +265,16 @@ export default function FeedbackPage() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
-            <Button onClick={goHome} size="lg" variant="ghost" className="text-light-400 hover:text-white hover:bg-white/5">
+            <Button onClick={goHome} size="lg" variant="ghost" className="text-light-400 hover:text-white hover:bg-white/5 cursor-pointer">
               <Home className="mr-2 h-4 w-4" /> Return to Dashboard
             </Button>
             
-            <Button onClick={startNewInterview} size="lg" className="btn-primary min-w-[200px]">
+            <Button onClick={startNewInterview} size="lg" className="btn-primary min-w-[200px] cursor-pointer">
               <RotateCcw className="mr-2 h-4 w-4" /> Start New Interview
             </Button>
             
             {isAuthenticated() && (
-              <Button asChild size="lg" className="btn-secondary min-w-[200px]">
+              <Button asChild size="lg" className="btn-secondary min-w-[200px] cursor-pointer">
                 <Link href="/interview/history">
                     History <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>

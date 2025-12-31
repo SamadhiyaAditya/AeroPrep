@@ -36,13 +36,6 @@ const Authlayout = ({children}:{children:ReactNode}) => {
         transition={{ delay: 1.2, duration: 0.8 }}
         className="relative z-10 w-full max-w-lg px-4"
       >
-        <div className="flex flex-col items-center mb-8">
-            <div className="h-16 w-16 rounded-2xl bg-primary-200/20 border border-primary-200/30 flex items-center justify-center text-primary-200 mb-4 backdrop-blur-sm">
-                <Plane className="h-8 w-8" />
-            </div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">Aero Prep</h1>
-            <p className="text-light-400 mt-2">Flight Simulator for Technical Interviews</p>
-        </div>
         {children}
       </motion.div>
     </div>

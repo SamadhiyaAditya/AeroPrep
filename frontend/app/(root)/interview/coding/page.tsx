@@ -194,6 +194,7 @@ export default function CodingRoundPage() {
          }
          
          localStorage.setItem('currentCodingChallenge', JSON.stringify(data));
+         setLoading(false);
      } catch (error) {
          console.error(`Failed to load challenge (Attempt ${retryCount + 1}):`, error);
          
@@ -320,6 +321,20 @@ export default function CodingRoundPage() {
 
   // --- RENDER: LOADING STATE ---
   if (step === 'coding' && (loading || !challenge)) {
+      if (!loading && !challenge) {
+        return (
+          <div className="min-h-screen flex flex-col items-center justify-center p-10 text-center">
+             <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
+             <h2 className="text-xl font-bold mb-2">Failed to Load Challenge</h2>
+             <p className="text-muted-foreground mb-6">We couldn't generate a coding problem for you at this time.</p>
+             <div className="flex gap-4">
+               <Button onClick={() => setStep('selection')} variant="outline">Back to Setup</Button>
+               <Button onClick={() => fetchChallenge()} className="btn-primary">Try Again</Button>
+             </div>
+          </div>
+        );
+      }
+
       return (
         <div className="min-h-screen flex flex-col items-center justify-center p-10 text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />

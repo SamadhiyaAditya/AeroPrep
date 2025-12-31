@@ -1,8 +1,6 @@
 const { prisma } = require('./prismaClient');
 
-/**
- * Create a new interview with questions
- */
+// Create a new interview with questions
 async function createInterview(userId, resumeURL, jobDescription, questions) {
   const interview = await prisma.interview.create({
     data: {
@@ -26,9 +24,7 @@ async function createInterview(userId, resumeURL, jobDescription, questions) {
   return interview;
 }
 
-/**
- * Save user answers to questions
- */
+// Save user answers to questions
 async function saveAnswers(interviewId, answers) {
   // answers format: [{ questionIndex: 0, answer: "..." }, ...]
   const updatePromises = answers.map(async (ans) => {
@@ -52,9 +48,7 @@ async function saveAnswers(interviewId, answers) {
   return { success: true };
 }
 
-/**
- * Save coding challenge and result
- */
+// Save coding challenge and result
 async function saveCodingResult(interviewId, challenge, code, result, skipped = false) {
   const codingChallenge = await prisma.codingChallenge.upsert({
     where: { interviewId },
@@ -83,9 +77,7 @@ async function saveCodingResult(interviewId, challenge, code, result, skipped = 
   return codingChallenge;
 }
 
-/**
- * Save final feedback
- */
+// Save final feedback
 async function saveFeedback(interviewId, feedback) {
   // Update interview status to completed
   await prisma.interview.update({
@@ -119,9 +111,7 @@ async function saveFeedback(interviewId, feedback) {
   return savedFeedback;
 }
 
-/**
- * Get all interviews for a user
- */
+// Get all interviews for a user
 async function getUserInterviews(userId) {
   const interviews = await prisma.interview.findMany({
     where: { userId },
@@ -137,9 +127,7 @@ async function getUserInterviews(userId) {
   return interviews;
 }
 
-/**
- * Get single interview with full details
- */
+// Get single interview with full details
 async function getInterviewById(interviewId, userId) {
   const interview = await prisma.interview.findFirst({
     where: { 

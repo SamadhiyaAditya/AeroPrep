@@ -198,7 +198,7 @@ Tech Stack: ${manualTech || "Not specified"}.`;
             <button 
                 onClick={() => setMode('upload')}
                 className={`flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-md transition-all ${
-                    mode === 'upload' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:bg-background/50'
+                    mode === 'upload' ? 'bg-background shadow-sm text-foreground cursor-pointer' : 'text-muted-foreground hover:bg-background/50 cursor-pointer'
                 }`}
             >
                 <FileText className="h-4 w-4" /> Upload Resume
@@ -206,7 +206,7 @@ Tech Stack: ${manualTech || "Not specified"}.`;
             <button 
                 onClick={() => setMode('manual')}
                 className={`flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-md transition-all ${
-                    mode === 'manual' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:bg-background/50'
+                    mode === 'manual' ? 'bg-background shadow-sm text-foreground cursor-pointer' : 'text-muted-foreground hover:bg-background/50 cursor-pointer'
                 }`}
             >
                 <Type className="h-4 w-4" /> Manually Enter Details

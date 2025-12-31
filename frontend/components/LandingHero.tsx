@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Code, Target, TrendingUp, Zap, Award, CheckCircle2, BarChart3, Brain } from "lucide-react";
+import { ArrowRight, Code, Target, TrendingUp, Zap, Award, CheckCircle2, BarChart3, Brain, Volume2, VolumeX } from "lucide-react";
 import { Timeline } from "@/components/ui/timeline";
 import { FeaturesSection } from "@/components/FeaturesSection";
 import { CTASection } from "@/components/CTASection";
@@ -10,6 +11,18 @@ import { Footer } from "@/components/Footer";
 import { Logo } from "@/components/Logo";
 
 export function LandingHero() {
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Pause video at the end frame (where AeroPrep branding appears)
+  const handleVideoEnd = () => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      // Keep the last frame visible
+      videoRef.current.currentTime = videoRef.current.duration;
+    }
+  };
+
   const timelineData = [
     {
       title: "Step 1",
@@ -171,44 +184,21 @@ export function LandingHero() {
   return (
     <div className="relative min-h-screen flex flex-col overflow-hidden font-sans antialiased selection:bg-primary-200/30 bg-black text-white">
         
-      {/* WORLD-CLASS BACKGROUND */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f] via-black to-black"></div>
-          
-          <div 
-            className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full opacity-30 blur-[120px]"
-            style={{
-              background: 'radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.15) 50%, transparent 70%)',
-              animation: 'float 20s ease-in-out infinite'
-            }}
-          ></div>
-          
-          <div 
-            className="absolute top-1/3 right-0 w-[500px] h-[500px] rounded-full opacity-25 blur-[100px]"
-            style={{
-              background: 'radial-gradient(circle, rgba(96, 165, 250, 0.25) 0%, rgba(59, 130, 246, 0.12) 60%, transparent 70%)',
-              animation: 'float 18s ease-in-out infinite 2s'
-            }}
-          ></div>
-          
-          <div 
-            className="absolute bottom-1/4 left-0 w-[400px] h-[400px] rounded-full opacity-20 blur-[90px]"
-            style={{
-              background: 'radial-gradient(circle, rgba(147, 197, 253, 0.2) 0%, transparent 70%)',
-              animation: 'float 15s ease-in-out infinite 4s'
-            }}
-          ></div>
-          
-          <div className="absolute inset-0 opacity-[0.15]" style={{
-            backgroundImage: `radial-gradient(circle, rgba(255, 255, 255, 0.15) 1px, transparent 1px)`,
-            backgroundSize: '40px 40px',
-            maskImage: 'radial-gradient(ellipse 80% 60% at 50% 40%, black 40%, transparent 80%)'
-          }}></div>
-          
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.4)_70%,rgba(0,0,0,0.8)_100%)]"></div>
+      {/* Background gradient for non-video areas */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-br from-gray-950 via-black to-gray-900"></div>
+
+      {/* Volume Control - Fixed bottom right */}
+      <div className="fixed bottom-6 right-6 z-50">
+          <button 
+              onClick={() => setIsMuted(!isMuted)}
+              className="bg-black/50 hover:bg-black/70 backdrop-blur-md text-white/80 hover:text-white p-3 rounded-full transition-all border border-white/20 shadow-2xl hover:scale-110 cursor-pointer"
+              title={isMuted ? "Unmute Video" : "Mute Video"}
+          >
+              {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+          </button>
       </div>
 
-      {/* Animations */}
+      {/* Animations for floating elements */}
       <style jsx>{`
         @keyframes float {
           0%, 100% { transform: translate(0, 0) scale(1); }
@@ -244,31 +234,52 @@ export function LandingHero() {
           </div>
       </header>
 
-      {/* Hero Content - Left Aligned */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
+      {/* Hero Content - Side by Side Layout */}
+      <main className="relative z-10 max-w-7xl mx-auto px-6 py-12 w-full">
           
-          <div className="max-w-4xl mb-32">
-              {/* Main Headline */}
-              <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tight mb-8 leading-[0.95]">
-                  <span className="block text-white">Ace Your</span>
-                  <span className="block bg-gradient-to-r from-primary-200 via-primary-300 to-blue-400 bg-clip-text text-transparent">
-                    Technical Interviews
-                  </span>
-              </h1>
-              
-              {/* Subheadline */}
-              <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mb-12 leading-relaxed font-light">
-                  Master your coding skills with advanced AI feedback. Get real-time performance insights, detailed analytics, and a personalized path to interview success.
-              </p>
+          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 mb-20">
+              {/* Left: Text Content */}
+              <div className="flex-1 max-w-2xl">
+                  {/* Main Headline */}
+                  <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 leading-[0.95]">
+                      <span className="block text-white">Ace Your</span>
+                      <span className="block bg-gradient-to-r from-primary-200 via-primary-300 to-blue-400 bg-clip-text text-transparent">
+                        Technical Interviews
+                      </span>
+                  </h1>
+                  
+                  {/* Subheadline */}
+                  <p className="text-lg md:text-xl text-gray-400 mb-8 leading-relaxed font-light">
+                      Master your coding skills with advanced AI feedback. Get real-time performance insights, detailed analytics, and a personalized path to interview success.
+                  </p>
 
-              {/* CTA */}
-              <div className="flex items-center gap-4">
-                  <Link href="/sign-up">
-                      <Button className="group h-14 px-10 text-lg font-semibold rounded-2xl bg-gradient-to-r from-primary-200 to-primary-300 hover:from-primary-200 hover:to-primary-300 text-white shadow-[0_0_40px_rgba(59,130,246,0.4)] hover:shadow-[0_0_50px_rgba(59,130,246,0.6)] transition-all duration-300 cursor-pointer">
-                         Test Yourself Now
-                          <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-                      </Button>
-                  </Link>
+                  {/* CTA */}
+                  <div className="flex items-center gap-4">
+                      <Link href="/sign-up">
+                          <Button className="group h-14 px-10 text-lg font-semibold rounded-2xl bg-gradient-to-r from-primary-200 to-primary-300 hover:from-primary-200 hover:to-primary-300 text-white shadow-[0_0_40px_rgba(59,130,246,0.4)] hover:shadow-[0_0_50px_rgba(59,130,246,0.6)] transition-all duration-300 cursor-pointer">
+                             Test Yourself Now
+                              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+                          </Button>
+                      </Link>
+                  </div>
+              </div>
+
+              {/* Right: Video */}
+              <div className="flex-1 w-full max-w-xl lg:max-w-2xl">
+                  <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-primary-200/20 border border-white/10">
+                      <video 
+                        ref={videoRef}
+                        autoPlay 
+                        muted={isMuted}
+                        playsInline 
+                        onEnded={handleVideoEnd}
+                        className="w-full h-auto object-cover"
+                      >
+                          <source src="/herovideo.mp4" type="video/mp4" />
+                      </video>
+                      {/* Subtle glow effect */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none"></div>
+                  </div>
               </div>
           </div>
 
