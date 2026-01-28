@@ -46,6 +46,8 @@ const useTypingEffect = (texts: string[], typingSpeed = 100, deletingSpeed = 50,
   return displayText;
 };
 
+
+
 function CreateInterviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();

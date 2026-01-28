@@ -21,7 +21,7 @@ export default function InterviewSessionPage() {
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1);
   const [isStarted, setIsStarted] = useState(false);
   const [userAnswer, setUserAnswer] = useState("");
-  const [conversationHistory, setConversationHistory] = useState<ConversationItem[]>([]);
+  const [conversationHistory, setConversationHistory] = useState<ConversationItem[]>([]); //Storing the question and answer for the current user
   const [showCodingChoice, setShowCodingChoice] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -62,10 +62,11 @@ export default function InterviewSessionPage() {
     setError("");
     
     try {
-      const questionData = await generateNextQuestion(
+      // Calling Generate Question Hook
+      const questionData = await generateNextQuestion( 
         resumeText,
         jobDescription,
-        conversationHistory.map(c => ({ question: c.question, answer: c.answer })),
+        conversationHistory.map(c => ({ question: c.question, answer: c.answer })), // sending back the quesiton and answer to the AI
         currentQuestionNumber
       );
       
